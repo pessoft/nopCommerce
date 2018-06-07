@@ -31,13 +31,13 @@
     if (supportRtl)
     {
         Html.AppendCssFileParts("~/css/admin/styles.rtl.css");
-        Html.AppendCssFileParts("~/lib/adminLTE/AdminLTE-2.3.0.rtl.css");
+        Html.AppendCssFileParts("~/lib/adminLTE/css/AdminLTE.rtl.css");
         Html.AppendCssFileParts("~/lib/bootstrap/css/bootstrap.rtl.css");
     }
     else
     {
         Html.AppendCssFileParts("~/css/admin/styles.css");
-        Html.AppendCssFileParts("~/lib/adminLTE/AdminLTE-2.3.0.min.css");
+        Html.AppendCssFileParts("~/lib/adminLTE/css/AdminLTE.min.css");
         Html.AppendCssFileParts("~/lib/bootstrap/css/bootstrap.min.css");
     }
 
@@ -49,7 +49,7 @@
     Html.AppendCssFileParts("~/lib/typeahead/typeahead.css");
     Html.AppendCssFileParts("~/lib/bootstrap-touchspin/jquery.bootstrap-touchspin.min.css");
     <!-- AdminLTE Skins (choose a skin from the css/skins) -->
-    Html.AppendCssFileParts("~/lib/adminLTE/skins/_all-skins.min.css");
+    Html.AppendCssFileParts("~/lib/adminLTE/css/skins/_all-skins.min.css");
 
     //scripts
     Html.AppendScriptParts($"~/lib/kendo/{kendoVersion}/kendo.web.min.js");
@@ -61,8 +61,8 @@
     Html.AppendScriptParts("~/lib/jquery-ui-1.10.3.custom.min.js");
     Html.AppendScriptParts("~/lib/jquery.validate.unobtrusive.min.js");
     Html.AppendScriptParts("~/lib/jquery.validate.min.js");
-    Html.AppendScriptParts("~/lib/adminLTE/app.min.js");
-    Html.AppendScriptParts("~/lib/bootstrap/bootstrap.min.js");
+    Html.AppendScriptParts("~/lib/adminLTE/js/adminlte.min.js");
+    Html.AppendScriptParts("~/lib/bootstrap/js/bootstrap.min.js");
     Html.AppendScriptParts("~/lib/bootstrap-touchspin/jquery.bootstrap-touchspin.min.js");
     Html.AppendScriptParts("~/lib/jquery-1.10.2.min.js");
 
@@ -134,7 +134,7 @@
                         <span class="logo-lg"></span>
                     </a>
                     <div class="navbar navbar-static-top" role="navigation">
-                        <a href="#" class="sidebar-toggle" data-toggle="offcanvas" role="button">
+                        <a href="#" class="sidebar-toggle" data-toggle="push-menu" role="button">
                             <span class="sr-only">&nbsp;</span>
                         </a>
                         @await Component.InvokeAsync("AdminWidget", new { widgetZone = AdminWidgetZones.HeaderToggleAfter })
@@ -265,7 +265,7 @@
                 $('#backTop').backTop();
 
                 $('a.sidebar-toggle').on('click', function () {
-                    var collapsed = $('body').hasClass('sidebar-collapse');
+                    var collapsed = !$('body').hasClass('sidebar-collapse');
                     saveUserPreferences('@(Url.Action("SavePreference", "Preferences"))', '@hideSidebarAttributeName', collapsed);
                 });
             });

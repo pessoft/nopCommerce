@@ -14,13 +14,13 @@
     if (supportRtl)
     {
         Html.AppendCssFileParts("~/css/admin/styles.rtl.css");
-        Html.AppendCssFileParts("~/lib/adminLTE/AdminLTE-2.3.0.rtl.css");
+        Html.AppendCssFileParts("~/lib/adminLTE/css/AdminLTE.rtl.css");
         Html.AppendCssFileParts("~/lib/bootstrap/css/bootstrap.rtl.css");
     }
     else
     {
         Html.AppendCssFileParts("~/css/admin/styles.css");
-        Html.AppendCssFileParts("~/lib/adminLTE/AdminLTE-2.3.0.min.css");
+        Html.AppendCssFileParts("~/lib/adminLTE/css/AdminLTE.min.css");
         Html.AppendCssFileParts("~/lib/bootstrap/css/bootstrap.min.css");
     }
     Html.AppendCssFileParts($"~/lib/kendo/{kendoVersion}/kendo.rtl.min.css");
@@ -39,7 +39,7 @@
     Html.AppendScriptParts("~/lib/jquery-ui-1.10.3.custom.min.js");
     Html.AppendScriptParts("~/lib/jquery.validate.unobtrusive.min.js");
     Html.AppendScriptParts("~/lib/jquery.validate.min.js");
-    Html.AppendScriptParts("~/lib/adminLTE/app.min.js");
+    Html.AppendScriptParts("~/lib/adminLTE/js/adminlte.min.js");
     Html.AppendScriptParts("~/lib/bootstrap/bootstrap.min.js");
     Html.AppendScriptParts("~/lib/bootstrap-touchspin/jquery.bootstrap-touchspin.min.js");
     Html.AppendScriptParts("~/lib/jquery-1.10.2.min.js");
