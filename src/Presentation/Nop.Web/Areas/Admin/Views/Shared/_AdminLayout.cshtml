@@ -262,8 +262,13 @@
         <a id="backTop" class="btn btn-back-top bg-teal"></a>
         <script>
             $(document).ready(function () {
+                //enable "back top" arrow
                 $('#backTop').backTop();
 
+                //enable tooltips
+                $('[data-toggle="tooltip"]').tooltip()
+
+                //save sidebar preferences
                 $('a.sidebar-toggle').on('click', function () {
                     var collapsed = !$('body').hasClass('sidebar-collapse');
                     saveUserPreferences('@(Url.Action("SavePreference", "Preferences"))', '@hideSidebarAttributeName', collapsed);

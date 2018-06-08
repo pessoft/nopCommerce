@@ -75,5 +75,11 @@
         </div>
         @Html.NopCssFiles(this.Url, ResourceLocation.Footer)
         @Html.NopScripts(this.Url, ResourceLocation.Footer)
+        <script>
+            $(document).ready(function () {
+                //enable tooltips
+                $('[data-toggle="tooltip"]').tooltip()
+            });
+        </script>
     </body>
-    </html>
+</html>
