@@ -157,8 +157,8 @@
                                 }
 
                                 //register CSS and JS
-                                Html.AddCssFileParts(ResourceLocation.Footer, "~/lib/fineuploader/fineuploader-4.2.2.min.css");
-                                Html.AddScriptParts(ResourceLocation.Footer, "~/lib/fineuploader/jquery.fineuploader-4.2.2.min.js");
+                                Html.AddCssFileParts(ResourceLocation.Footer, "~/lib/fineuploader/fine-uploader.min.css");
+                                Html.AddScriptParts(ResourceLocation.Footer, "~/lib/fineuploader/jquery.fine-uploader.min.js");
 
                                 //ex. ['jpg', 'jpeg', 'png', 'gif'] or []
                                 var allowedFileExtensions = string.Join(", ", attribute.AllowedFileExtensions.Select(x => "'" + x.Trim() + "'").ToList());
