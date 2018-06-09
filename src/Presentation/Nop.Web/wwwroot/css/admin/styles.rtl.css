@@ -1350,14 +1350,18 @@ span.grid-report-item.red {
     height: 34px;
     padding-left: 30px;
 }
+.bootstrap-touchspin .input-group-btn-vertical {
+    left: 22px;
+    right: auto;
+}
 .bootstrap-touchspin .input-group-btn-vertical > .btn {
     background: #fff;
     border-color: #d2d6de;
     border-radius: 0;
     height: 18px;
     font-size: 0;
-    padding-left: 14px;
-    padding-right: 6px;
+    padding-left: 15px;
+    padding-right: 5px;
 }
 .bootstrap-touchspin .input-group-btn-vertical > .btn:before {
     font-size: 9px;
