@@ -15,7 +15,7 @@ var Accordion = {
         this.sections = $('#' + elem + ' .tab-section');
         this.currentSectionId = false;
         var headers = $('#' + elem + ' .tab-section ' + clickableEntity);
-        headers.click(function () {
+        headers.on('click', function () {
             Accordion.headerClicked($(this));
         });
     },

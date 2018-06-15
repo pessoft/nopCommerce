@@ -123,7 +123,7 @@ function displayBarNotification(message, messagetype, timeout) {
                 clearTimeout(barNotificationTimeout);
             });
 
-    $('#bar-notification .close').unbind('click').click(function () {
+    $('#bar-notification .close').off('click').click(function () {
         $('#bar-notification').fadeOut('slow');
     });
 

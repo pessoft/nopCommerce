@@ -19,7 +19,7 @@
             <form asp-route="CheckoutConfirm" method="post" id="confirm-order-form">
                 <script asp-location="Footer">
                     $(document).ready(function () {
-                        $('.confirm-order-next-step-button').click(function () {
+                        $('.confirm-order-next-step-button').on('click', function () {
                             //terms of service
                             var termOfServiceOk = true;
                             if ($('#termsofservice').length > 0) {

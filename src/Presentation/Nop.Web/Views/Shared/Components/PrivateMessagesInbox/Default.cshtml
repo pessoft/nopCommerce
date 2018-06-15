@@ -2,8 +2,8 @@
 <div class="private-messages-box">
     <script asp-location="Footer">
         $(document).ready(function () {
-            $('#select-all-inbox').click(function () {
-                $('#pm-inbox-table .rowcheckbox').attr('checked', $(this).is(':checked')).change();
+            $('#select-all-inbox').on('click', function () {
+                $('#pm-inbox-table .rowcheckbox').attr('checked', $(this).is(':checked')).trigger('change');
             });
 
             $('#pm-inbox-table .rowcheckbox').on('change', function (e) {

@@ -1,12 +1,12 @@
 ﻿<script asp-location="Footer">
     $(document).ready(function () {
         $('#check-availability-button').before('<span id="username-availabilty"></span>');
-        $('#Username').bind({
+        $('#Username').on({
             keydown: function () {
                 $('#username-availabilty').text('');
             }
         });
-        $('#check-availability-button').click(function () {
+        $('#check-availability-button').on('click', function () {
             $('#username-availabilty').text('');
             if ($("#Username").val().length > 0) {
                 $('#availability-check-progress').show();

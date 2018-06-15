@@ -3,8 +3,8 @@
     <script asp-location="Footer">
         $(document).ready(function () {
 
-            $('#selectall-sent').click(function () {
-                $('#pm-sent-table .rowcheckbox').attr('checked', $(this).is(':checked')).change();
+            $('#selectall-sent').on('click', function () {
+                $('#pm-sent-table .rowcheckbox').attr('checked', $(this).is(':checked')).trigger('change');
             });
 
             $('#pm-sent-table .rowcheckbox').on('change', function (e) {
