@@ -18,8 +18,8 @@
     Html.AppendScriptParts(ResourceLocation.Footer, "~/js/public.common.js");
     Html.AppendScriptParts(ResourceLocation.Footer, "~/lib/jquery-migrate/jquery-migrate-1.4.1.js");
     Html.AppendScriptParts(ResourceLocation.Footer, "~/lib/jquery-ui/jquery-ui-1.10.3.custom.min.js");
-    Html.AppendScriptParts(ResourceLocation.Footer, "~/lib/jquery-validate/jquery.validate.unobtrusive.min.js");
-    Html.AppendScriptParts(ResourceLocation.Footer, "~/lib/jquery-validate/jquery.validate.min.js");
+    Html.AppendScriptParts(ResourceLocation.Footer, "~/lib/jquery-validate/jquery.validate.unobtrusive/jquery.validate.unobtrusive.min.js");
+    Html.AppendScriptParts(ResourceLocation.Footer, "~/lib/jquery-validate/jquery.validate-v1.11.1/jquery.validate.min.js");
     //jQuery is the only js file in the head. if we decide to move it to the footer, then ensure that all inline scripts (with jQuery usage) with are also moved to the footer
     //the issue that it's not possible in some cases (e.g. "Edit address", when Ajax request is made on one-page checkout)
     Html.AppendScriptParts(ResourceLocation.Head, "~/lib/jquery/jquery-1.9.0.js");

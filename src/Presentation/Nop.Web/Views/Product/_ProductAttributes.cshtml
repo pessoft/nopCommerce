@@ -466,7 +466,7 @@
                         if (data.message) {
                             alert(data.message);
                         }
-                        $.event.trigger({ type: "product_attributes_changed", changedData: data });
+                        $(document).trigger({ type: "product_attributes_changed", changedData: data });
                     }
                 });
             }

@@ -280,7 +280,7 @@
                             $('#checkout_attribute_input_' + data.disabledattributeids[i]).hide();
                         }
                     }
-                    $.event.trigger({ type: "checkout_attributes_changed", changedData: data });
+                    $(document).trigger({ type: "checkout_attributes_changed", changedData: data });
                 }
             });
         }
