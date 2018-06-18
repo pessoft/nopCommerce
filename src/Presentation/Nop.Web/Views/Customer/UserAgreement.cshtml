@@ -12,9 +12,9 @@
     });
     function toggleContinueButton() {
         if ($('#agreement-agree').is(':checked')) {
-            $('#continue-downloading').removeAttr('disabled');
+            $('#continue-downloading').prop('disabled', false);
         } else {
-            $('#continue-downloading').attr('disabled', 'disabled');
+            $('#continue-downloading').prop('disabled', true);
         }
     }
 </script>

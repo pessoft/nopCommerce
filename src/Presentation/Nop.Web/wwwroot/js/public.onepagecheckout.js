@@ -22,17 +22,17 @@ var Checkout = {
         var descendants = element.find('*');
         $(descendants).each(function() {
             if (isDisabled) {
-                $(this).attr('disabled', 'disabled');
+                $(this).prop("disabled", true);
             } else {
-                $(this).removeAttr('disabled');
+                $(this).prop("disabled", false);
             }
         });
 
         if (isDisabled) {
-                element.attr('disabled', 'disabled');
-            } else {
-                element.removeAttr('disabled');
-            }
+            element.prop("disabled", true);
+        } else {
+            $(this).prop("disabled", false);
+        }
     },
 
     setLoadWaiting: function (step, keepDisabled) {

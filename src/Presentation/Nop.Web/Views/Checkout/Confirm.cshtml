@@ -33,7 +33,7 @@
                             }
                             if (termOfServiceOk) {
                                 //$('#confirm-order-form').submit();
-                                //$('.confirm-order-next-step-button').attr('disabled', 'disabled');
+                                //$('.confirm-order-next-step-button').prop('disabled', true);
                                 return true;
                             } else {
                                 return false;
@@ -82,9 +82,9 @@
                             function () {
                                 var button = $(this).find('input[type="submit"][name="nextstep"]');
                                 setTimeout(function () {
-                                    button.attr('disabled', 'disabled');
+                                    button.prop('disabled', true);
                                 },
-                                    0);
+                                0);
                             });
                     </script>
                 }
