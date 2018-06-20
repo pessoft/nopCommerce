@@ -72,7 +72,6 @@ function displayPopupContentFromUrl(url, title, modal, width) {
     $('<div></div>').load(url)
         .dialog({
             modal: isModal,
-            position: ['center', 20],
             width: targetWidth,
             maxHeight: maxHeight,
             title: title,
