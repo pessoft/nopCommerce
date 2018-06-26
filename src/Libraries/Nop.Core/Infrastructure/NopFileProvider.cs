@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.AccessControl;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.FileProviders;
 
@@ -461,6 +462,17 @@ namespace Nop.Core.Infrastructure
         }
 
         /// <summary>
+        /// Opens a file, reads all lines of the file with the specified encoding, and then closes the file.
+        /// </summary>
+        /// <param name="path">The file to open for reading</param>
+        /// <param name="encoding">The encoding applied to the contents of the file</param>
+        /// <returns>A string containing all lines of the file</returns>
+        public virtual async Task<string> ReadAllTextAsync(string path, Encoding encoding)
+        {
+            return await File.ReadAllTextAsync(path, encoding);
+        }
+
+        /// <summary>
         /// Sets the date and time, in coordinated universal time (UTC), that the specified file was last written to
         /// </summary>
         /// <param name="path">The file for which to set the date and time information</param>
@@ -493,6 +505,18 @@ namespace Nop.Core.Infrastructure
         public virtual void WriteAllText(string path, string contents, Encoding encoding)
         {
             File.WriteAllText(path, contents, encoding);
+        }
+
+        /// <summary>
+        /// Creates a new file, writes the specified string to the file using the specified encoding,
+        /// and then closes the file. If the target file already exists, it is overwritten.
+        /// </summary>
+        /// <param name="path">The file to write to</param>
+        /// <param name="contents">The string to write to the file</param>
+        /// <param name="encoding">The encoding to apply to the string</param>
+        public virtual async Task WriteAllTextAsync(string path, string contents, Encoding encoding)
+        {
+            await File.WriteAllTextAsync(path, contents, encoding);
         }
 
         protected string BaseDirectory { get; }
