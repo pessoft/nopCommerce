@@ -5,6 +5,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -53,6 +55,37 @@ namespace Nop.Data.Extensions
 
             //get a copy of the entity
             var entityCopy = getValuesFunction(entityEntry)?.ToObject() as TEntity;
+
+            return entityCopy;
+        }
+
+        /// <summary>
+        /// Loads a copy of the entity using the passed function
+        /// </summary>
+        /// <typeparam name="TEntity">Entity type</typeparam>
+        /// <param name="context">Database context</param>
+        /// <param name="entity">Entity</param>
+        /// <param name="getValuesFunction">Function to get the values of the tracked entity</param>
+        /// <returns>Copy of the passed entity</returns>
+        private static async Task<TEntity> LoadEntityCopyAsync<TEntity>(IDbContext context, TEntity entity,
+            Func<EntityEntry<TEntity>, CancellationToken, Task<PropertyValues>> getValuesFunction, CancellationToken cancellationToken)
+            where TEntity : BaseEntity
+        {
+            if (context == null)
+                throw new ArgumentNullException(nameof(context));
+
+            //try to get the EF database context
+            if (!(context is DbContext dbContext))
+                throw new InvalidOperationException("Context does not support operation");
+
+            //try to get the entity tracking object
+            var entityEntry = dbContext.ChangeTracker.Entries<TEntity>().FirstOrDefault(entry => entry.Entity == entity);
+            if (entityEntry == null)
+                return null;
+
+            //get a copy of the entity
+            var propertyValues = await getValuesFunction(entityEntry, cancellationToken);
+            var entityCopy = propertyValues?.ToObject() as TEntity;
 
             return entityCopy;
         }
@@ -126,6 +159,21 @@ namespace Nop.Data.Extensions
         }
 
         /// <summary>
+        /// Loads the database copy of the entity
+        /// </summary>
+        /// <typeparam name="TEntity">Entity type</typeparam>
+        /// <param name="context">Database context</param>
+        /// <param name="entity">Entity</param>
+        /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete</param>
+        /// <returns>The asynchronous task whose result contains a copy of the passed entity</returns>
+        public static async Task<TEntity> LoadDatabaseCopyAsync<TEntity>(this IDbContext context, TEntity entity,
+            CancellationToken cancellationToken = default(CancellationToken)) where TEntity : BaseEntity
+        {
+            return await LoadEntityCopyAsync(context, entity,
+                (entityEntry, cancelToken) => entityEntry.GetDatabaseValuesAsync(cancelToken), cancellationToken);
+        }
+
+        /// <summary>
         /// Drop a plugin table
         /// </summary>
         /// <param name="context">Database context</param>
@@ -145,6 +193,28 @@ namespace Nop.Data.Extensions
         }
 
         /// <summary>
+        /// Drop a plugin table
+        /// </summary>
+        /// <param name="context">Database context</param>
+        /// <param name="tableName">Table name</param>
+        /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete</param>
+        /// <returns>The asynchronous task whose result determines that plugin table is dropped</returns>
+        public static async Task DropPluginTableAsync(this IDbContext context, string tableName,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (context == null)
+                throw new ArgumentNullException(nameof(context));
+
+            if (string.IsNullOrEmpty(tableName))
+                throw new ArgumentNullException(nameof(tableName));
+
+            //drop the table
+            var dbScript = $"IF OBJECT_ID('{tableName}', 'U') IS NOT NULL DROP TABLE [{tableName}]";
+            await context.ExecuteSqlCommandAsync(dbScript, cancellationToken: cancellationToken);
+            await context.SaveChangesAsync(cancellationToken);
+        }
+
+        /// <summary>
         /// Get table name of entity
         /// </summary>
         /// <typeparam name="TEntity">Entity type</typeparam>
@@ -158,7 +228,7 @@ namespace Nop.Data.Extensions
             //try to get the EF database context
             if (!(context is DbContext dbContext))
                 throw new InvalidOperationException("Context does not support operation");
-            
+
             var entityTypeFullName = typeof(TEntity).FullName;
             if (!tableNames.ContainsKey(entityTypeFullName))
             {
@@ -196,7 +266,7 @@ namespace Nop.Data.Extensions
                 var entityType = dbContext.Model.FindEntityType(typeof(TEntity));
 
                 //get property name - max length pairs
-                columnsMaxLength.TryAdd(entityTypeFullName, 
+                columnsMaxLength.TryAdd(entityTypeFullName,
                     entityType.GetProperties().Select(property => (property.Name, property.GetMaxLength())));
             }
 
@@ -237,7 +307,7 @@ namespace Nop.Data.Extensions
                     if (!mapping.Precision.HasValue || !mapping.Scale.HasValue)
                         return (property.Name, null);
 
-                    return (property.Name, new decimal?((decimal) Math.Pow(10, mapping.Precision.Value - mapping.Scale.Value)));
+                    return (property.Name, new decimal?((decimal)Math.Pow(10, mapping.Precision.Value - mapping.Scale.Value)));
                 }));
             }
 
@@ -260,7 +330,7 @@ namespace Nop.Data.Extensions
             if (!(context is DbContext dbContext))
                 throw new InvalidOperationException("Context does not support operation");
 
-            if (!string.IsNullOrEmpty(databaseName)) 
+            if (!string.IsNullOrEmpty(databaseName))
                 return databaseName;
 
             //get database connection
@@ -288,6 +358,23 @@ namespace Nop.Data.Extensions
         }
 
         /// <summary>
+        /// Execute commands from the SQL script against the context database
+        /// </summary>
+        /// <param name="context">Database context</param>
+        /// <param name="sql">SQL script</param>
+        /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete</param>
+        /// <returns>The asynchronous task whose result determines that SQL script is executed</returns>
+        public static async Task ExecuteSqlScriptAsync(this IDbContext context, string sql,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (context == null)
+                throw new ArgumentNullException(nameof(context));
+
+            var sqlCommands = GetCommandsFromScript(sql);
+            await Task.WhenAll(sqlCommands.Select(command => context.ExecuteSqlCommandAsync(command, cancellationToken: cancellationToken)));
+        }
+
+        /// <summary>
         /// Execute commands from a file with SQL script against the context database
         /// </summary>
         /// <param name="context">Database context</param>
@@ -301,6 +388,25 @@ namespace Nop.Data.Extensions
                 return;
 
             context.ExecuteSqlScript(File.ReadAllText(filePath));
+        }
+
+        /// <summary>
+        /// Execute commands from a file with SQL script against the context database
+        /// </summary>
+        /// <param name="context">Database context</param>
+        /// <param name="filePath">Path to the file</param>
+        /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete</param>
+        /// <returns>The asynchronous task whose result determines that SQL script is executed</returns>
+        public static async Task ExecuteSqlScriptFromFileAsync(this IDbContext context, string filePath,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (context == null)
+                throw new ArgumentNullException(nameof(context));
+
+            if (!File.Exists(filePath))
+                return;
+
+            await context.ExecuteSqlScriptAsync(await File.ReadAllTextAsync(filePath, cancellationToken), cancellationToken);
         }
 
         #endregion

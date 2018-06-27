@@ -1,8 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Nop.Core;
 using Nop.Data.Mapping;
@@ -31,9 +34,9 @@ namespace Nop.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             //dynamically load all entity and query type configurations
-            var typeConfigurations = Assembly.GetExecutingAssembly().GetTypes().Where(type => 
-                (type.BaseType?.IsGenericType ?? false) 
-                    && (type.BaseType.GetGenericTypeDefinition() == typeof(NopEntityTypeConfiguration<>) 
+            var typeConfigurations = Assembly.GetExecutingAssembly().GetTypes().Where(type =>
+                (type.BaseType?.IsGenericType ?? false)
+                    && (type.BaseType.GetGenericTypeDefinition() == typeof(NopEntityTypeConfiguration<>)
                         || type.BaseType.GetGenericTypeDefinition() == typeof(NopQueryTypeConfiguration<>)));
 
             foreach (var typeConfiguration in typeConfigurations)
@@ -41,7 +44,7 @@ namespace Nop.Data
                 var configuration = (IMappingConfiguration)Activator.CreateInstance(typeConfiguration);
                 configuration.ApplyConfiguration(modelBuilder);
             }
-            
+
             base.OnModelCreating(modelBuilder);
         }
 
@@ -102,7 +105,7 @@ namespace Nop.Data
         {
             return this.Query<TQuery>().FromSql(sql);
         }
-        
+
         /// <summary>
         /// Creates a LINQ query for the entity based on a raw SQL query
         /// </summary>
@@ -141,10 +144,46 @@ namespace Nop.Data
             }
             else
                 result = this.Database.ExecuteSqlCommand(sql, parameters);
-            
+
             //return previous timeout back
             this.Database.SetCommandTimeout(previousTimeout);
-            
+
+            return result;
+        }
+
+        /// <summary>
+        /// Executes the given SQL against the database
+        /// </summary>
+        /// <param name="sql">The SQL to execute</param>
+        /// <param name="doNotEnsureTransaction">true - the transaction creation is not ensured; false - the transaction creation is ensured.</param>
+        /// <param name="timeout">The timeout to use for command. Note that the command timeout is distinct from the connection timeout, which is commonly set on the database connection string</param>
+        /// <param name="parameters">Parameters to use with the SQL</param>
+        /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete</param>
+        /// <returns>The asynchronous task whose result contains the number of rows affected</returns>
+        public virtual async Task<int> ExecuteSqlCommandAsync(RawSqlString sql, bool doNotEnsureTransaction = false, int? timeout = null,
+            IEnumerable<object> parameters = null, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            //set specific command timeout
+            var previousTimeout = this.Database.GetCommandTimeout();
+            this.Database.SetCommandTimeout(timeout);
+
+            var result = 0;
+            parameters = parameters ?? new List<object>();
+            if (!doNotEnsureTransaction)
+            {
+                //use with transaction
+                using (var transaction = await this.Database.BeginTransactionAsync(cancellationToken))
+                {
+                    result = await this.Database.ExecuteSqlCommandAsync(sql, parameters, cancellationToken);
+                    transaction.Commit();
+                }
+            }
+            else
+                result = await this.Database.ExecuteSqlCommandAsync(sql, parameters, cancellationToken);
+
+            //return previous timeout back
+            this.Database.SetCommandTimeout(previousTimeout);
+
             return result;
         }
 
@@ -161,7 +200,7 @@ namespace Nop.Data
             var entityEntry = this.Entry(entity);
             if (entityEntry == null)
                 return;
-            
+
             //set the entity is not being tracked by the context
             entityEntry.State = EntityState.Detached;
         }

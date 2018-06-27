@@ -14,13 +14,13 @@ namespace Nop.Core.Infrastructure
     /// <summary>
     /// IO functions using the on-disk file system
     /// </summary>
-    public class NopFileProvider : PhysicalFileProvider, INopFileProvider
+    public partial class NopFileProvider : PhysicalFileProvider, INopFileProvider
     {
         /// <summary>
         /// Initializes a new instance of a NopFileProvider
         /// </summary>
         /// <param name="hostingEnvironment">Hosting environment</param>
-        public NopFileProvider(IHostingEnvironment hostingEnvironment) 
+        public NopFileProvider(IHostingEnvironment hostingEnvironment)
             : base(File.Exists(hostingEnvironment.WebRootPath) ? Path.GetDirectoryName(hostingEnvironment.WebRootPath) : hostingEnvironment.WebRootPath)
         {
             var path = hostingEnvironment.ContentRootPath ?? string.Empty;
@@ -87,7 +87,7 @@ namespace Nop.Core.Infrastructure
             {
             }
         }
-        
+
         /// <summary>
         ///  Depth-first recursive delete, with handling for descendant directories open in Windows Explorer.
         /// </summary>
@@ -439,7 +439,7 @@ namespace Nop.Core.Infrastructure
             path = path.Replace("~/", string.Empty).TrimStart('/').Replace('/', '\\');
             return Path.Combine(BaseDirectory ?? string.Empty, path);
         }
-        
+
         /// <summary>
         /// Reads the contents of the file into a byte array
         /// </summary>
@@ -466,10 +466,11 @@ namespace Nop.Core.Infrastructure
         /// </summary>
         /// <param name="path">The file to open for reading</param>
         /// <param name="encoding">The encoding applied to the contents of the file</param>
-        /// <returns>A string containing all lines of the file</returns>
-        public virtual async Task<string> ReadAllTextAsync(string path, Encoding encoding)
+        /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete</param>
+        /// <returns>The asynchronous task whose result contains the read text from a file by the passed path</returns>
+        public virtual async Task<string> ReadAllTextAsync(string path, Encoding encoding, CancellationToken cancellationToken)
         {
-            return await File.ReadAllTextAsync(path, encoding);
+            return await File.ReadAllTextAsync(path, encoding, cancellationToken);
         }
 
         /// <summary>
@@ -514,9 +515,11 @@ namespace Nop.Core.Infrastructure
         /// <param name="path">The file to write to</param>
         /// <param name="contents">The string to write to the file</param>
         /// <param name="encoding">The encoding to apply to the string</param>
-        public virtual async Task WriteAllTextAsync(string path, string contents, Encoding encoding)
+        /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete</param>
+        /// <returns>The asynchronous task whose result determines that passed text is written to a file by the passed path</returns>
+        public virtual async Task WriteAllTextAsync(string path, string contents, Encoding encoding, CancellationToken cancellationToken)
         {
-            await File.WriteAllTextAsync(path, contents, encoding);
+            await File.WriteAllTextAsync(path, contents, encoding, cancellationToken);
         }
 
         protected string BaseDirectory { get; }
