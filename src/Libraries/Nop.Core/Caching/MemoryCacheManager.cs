@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Primitives;
 
@@ -152,6 +153,18 @@ namespace Nop.Core.Caching
         }
 
         /// <summary>
+        /// Gets or sets the value associated with the specified key.
+        /// </summary>
+        /// <typeparam name="T">Type of cached item</typeparam>
+        /// <param name="key">Key of cached item</param>
+        /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete</param>
+        /// <returns>The asynchronous task whose result contains cached value associated with the specified key</returns>
+        public virtual async Task<T> GetAsync<T>(string key, CancellationToken cancellationToken)
+        {
+            return await Task.Run(() => _cache.Get<T>(key), cancellationToken);
+        }
+
+        /// <summary>
         /// Adds the specified key and object to the cache
         /// </summary>
         /// <param name="key">Key of cached item</param>
@@ -166,6 +179,23 @@ namespace Nop.Core.Caching
         }
 
         /// <summary>
+        /// Adds the specified key and object to the cache
+        /// </summary>
+        /// <param name="key">Key of cached item</param>
+        /// <param name="data">Value for caching</param>
+        /// <param name="cacheTime">Cache time in minutes</param>
+        /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete</param>
+        /// <returns>The asynchronous task whose result determines that item is addded to the cache</returns>
+        public virtual async Task SetAsync(string key, object data, int cacheTime, CancellationToken cancellationToken)
+        {
+            await Task.Run(() =>
+            {
+                if (data != null)
+                    _cache.Set(AddKey(key), data, GetMemoryCacheEntryOptions(TimeSpan.FromMinutes(cacheTime)));
+            }, cancellationToken);
+        }
+
+        /// <summary>
         /// Gets a value indicating whether the value associated with the specified key is cached
         /// </summary>
         /// <param name="key">Key of cached item</param>
@@ -173,6 +203,93 @@ namespace Nop.Core.Caching
         public virtual bool IsSet(string key)
         {
             return _cache.TryGetValue(key, out object _);
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the value associated with the specified key is cached
+        /// </summary>
+        /// <param name="key">Key of cached item</param>
+        /// <returns>True if item already is in cache; otherwise false</returns>
+        /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete</param>
+        /// <returns>The asynchronous task whose result determines whether item is already in the cache</returns>
+        public virtual async Task<bool> IsSetAsync(string key, CancellationToken cancellationToken)
+        {
+            return await Task.Run(() => _cache.TryGetValue(key, out object _), cancellationToken);
+        }
+
+        /// <summary>
+        /// Removes the value with the specified key from the cache
+        /// </summary>
+        /// <param name="key">Key of cached item</param>
+        public virtual void Remove(string key)
+        {
+            _cache.Remove(RemoveKey(key));
+        }
+
+        /// <summary>
+        /// Removes the value with the specified key from the cache
+        /// </summary>
+        /// <param name="key">Key of cached item</param>
+        /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete</param>
+        /// <returns>The asynchronous task whose result determines that item is deleted</returns>
+        public virtual async Task RemoveAsync(string key, CancellationToken cancellationToken)
+        {
+            await Task.Run(() => _cache.Remove(RemoveKey(key)), cancellationToken);
+        }
+
+        /// <summary>
+        /// Removes items by key pattern
+        /// </summary>
+        /// <param name="pattern">String key pattern</param>
+        public virtual void RemoveByPattern(string pattern)
+        {
+            this.RemoveByPattern(pattern, _allKeys.Where(p => p.Value).Select(p => p.Key));
+        }
+
+        /// <summary>
+        /// Removes items by key pattern
+        /// </summary>
+        /// <param name="pattern">String key pattern</param>
+        /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete</param>
+        /// <returns>The asynchronous task whose result determines that items are deleted by key pattern</returns>
+        public virtual async Task RemoveByPatternAsync(string pattern, CancellationToken cancellationToken)
+        {
+            await this.RemoveByPatternAsync(pattern, _allKeys.Where(pair => pair.Value).Select(pair => pair.Key), cancellationToken);
+        }
+
+        /// <summary>
+        /// Clear all cache data
+        /// </summary>
+        public virtual void Clear()
+        {
+            //send cancellation request
+            _cancellationTokenSource.Cancel();
+
+            //releases all resources used by this cancellation token
+            _cancellationTokenSource.Dispose();
+
+            //recreate cancellation token
+            _cancellationTokenSource = new CancellationTokenSource();
+        }
+
+        /// <summary>
+        /// Clear all cache data
+        /// </summary>
+        /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete</param>
+        /// <returns>The asynchronous task whose result determines that all items are deleted</returns>
+        public virtual async Task ClearAsync(CancellationToken cancellationToken)
+        {
+            await Task.Run(() =>
+            {
+                //send cancellation request
+                _cancellationTokenSource.Cancel();
+
+                //releases all resources used by this cancellation token
+                _cancellationTokenSource.Dispose();
+
+                //recreate cancellation token
+                _cancellationTokenSource = new CancellationTokenSource();
+            }, cancellationToken);
         }
 
         /// <summary>
@@ -205,36 +322,37 @@ namespace Nop.Core.Caching
         }
 
         /// <summary>
-        /// Removes the value with the specified key from the cache
+        /// Perform some action with exclusive in-memory lock
         /// </summary>
-        /// <param name="key">Key of cached item</param>
-        public virtual void Remove(string key)
+        /// <param name="resource">The thing we are locking on</param>
+        /// <param name="expirationTime">The time after which the lock will automatically be expired by Redis</param>
+        /// <param name="action">Action to be performed with locking</param>
+        /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete</param>
+        /// <returns>The asynchronous task whose result determines whether lock is acquired and action is performed</returns>
+        public virtual async Task<bool> PerformActionWithLockAsync(string resource, TimeSpan expirationTime, Func<CancellationToken, Task> action,
+            CancellationToken cancellationToken)
         {
-            _cache.Remove(RemoveKey(key));
-        }
+            return await Task.Run(async () =>
+            {
+                //ensure that lock is acquired
+                if (!_allKeys.TryAdd(resource, true))
+                    return false;
 
-        /// <summary>
-        /// Removes items by key pattern
-        /// </summary>
-        /// <param name="pattern">String key pattern</param>
-        public virtual void RemoveByPattern(string pattern)
-        {
-            this.RemoveByPattern(pattern, _allKeys.Where(p => p.Value).Select(p => p.Key));
-        }
+                try
+                {
+                    _cache.Set(resource, resource, GetMemoryCacheEntryOptions(expirationTime));
 
-        /// <summary>
-        /// Clear all cache data
-        /// </summary>
-        public virtual void Clear()
-        {
-            //send cancellation request
-            _cancellationTokenSource.Cancel();
+                    //perform action
+                    await action(cancellationToken);
 
-            //releases all resources used by this cancellation token
-            _cancellationTokenSource.Dispose();
-
-            //recreate cancellation token
-            _cancellationTokenSource = new CancellationTokenSource();
+                    return true;
+                }
+                finally
+                {
+                    //release lock even if action fails
+                    Remove(resource);
+                }
+            }, cancellationToken);
         }
 
         /// <summary>

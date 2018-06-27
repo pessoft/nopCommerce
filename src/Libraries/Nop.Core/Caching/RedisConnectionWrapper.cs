@@ -1,6 +1,8 @@
 using System;
 using System.Linq;
 using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
 using Nop.Core.Configuration;
 using RedLockNet.SERedis;
 using RedLockNet.SERedis.Configuration;
@@ -11,13 +13,13 @@ namespace Nop.Core.Caching
     /// <summary>
     /// Represents Redis connection wrapper implementation
     /// </summary>
-    public class RedisConnectionWrapper : IRedisConnectionWrapper, ILocker
+    public partial class RedisConnectionWrapper : IRedisConnectionWrapper, ILocker
     {
         #region Fields
 
-        private readonly NopConfig _config;
-        private readonly Lazy<string> _connectionString;
         private readonly object _lock = new object();
+        private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
+        private readonly Lazy<string> _connectionString;
         private volatile ConnectionMultiplexer _connection;
         private volatile RedLockFactory _redisLockFactory;
 
@@ -25,14 +27,9 @@ namespace Nop.Core.Caching
 
         #region Ctor
 
-        /// <summary>
-        /// Ctor
-        /// </summary>
-        /// <param name="config">Config</param>
         public RedisConnectionWrapper(NopConfig config)
         {
-            this._config = config;
-            this._connectionString = new Lazy<string>(GetConnectionString);
+            this._connectionString = new Lazy<string>(() => config.RedisCachingConnectionString);
             this._redisLockFactory = CreateRedisLockFactory();
         }
 
@@ -41,19 +38,10 @@ namespace Nop.Core.Caching
         #region Utilities
 
         /// <summary>
-        /// Get connection string to Redis cache from configuration
-        /// </summary>
-        /// <returns></returns>
-        protected string GetConnectionString()
-        {
-            return _config.RedisCachingConnectionString;
-        }
-
-        /// <summary>
         /// Get connection to Redis servers
         /// </summary>
         /// <returns></returns>
-        protected ConnectionMultiplexer GetConnection()
+        protected virtual ConnectionMultiplexer GetConnection()
         {
             if (_connection != null && _connection.IsConnected) return _connection;
 
@@ -72,10 +60,40 @@ namespace Nop.Core.Caching
         }
 
         /// <summary>
+        /// Get connection to Redis servers
+        /// </summary>
+        /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete</param>
+        /// <returns>The asynchronous task whose result contains connection to Redis servers</returns>
+        protected virtual async Task<ConnectionMultiplexer> GetConnectionAsync(CancellationToken cancellationToken)
+        {
+            if (_connection?.IsConnected ?? false)
+                return _connection;
+
+            await _semaphore.WaitAsync(cancellationToken);
+            try
+            {
+                if (_connection?.IsConnected ?? false)
+                    return _connection;
+
+                //Connection disconnected. Disposing connection...
+                _connection?.Dispose();
+
+                //Creating new instance of Redis Connection
+                _connection = await ConnectionMultiplexer.ConnectAsync(_connectionString.Value);
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
+
+            return _connection;
+        }
+
+        /// <summary>
         /// Create instance of RedLock factory
         /// </summary>
         /// <returns>RedLock factory</returns>
-        protected RedLockFactory CreateRedisLockFactory()
+        protected virtual RedLockFactory CreateRedisLockFactory()
         {
             //get RedLock endpoints
             var configurationOptions = ConfigurationOptions.Parse(_connectionString.Value);
@@ -103,9 +121,20 @@ namespace Nop.Core.Caching
         /// </summary>
         /// <param name="db">Database number; pass null to use the default value</param>
         /// <returns>Redis cache database</returns>
-        public IDatabase GetDatabase(int? db = null)
+        public virtual IDatabase GetDatabase(int? db = null)
         {
             return GetConnection().GetDatabase(db ?? -1);
+        }
+
+        /// <summary>
+        /// Obtain an interactive connection to a database inside Redis
+        /// </summary>
+        /// <param name="db">Database number; pass null to use the default value</param>
+        /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete</param>
+        /// <returns>The asynchronous task whose result contains Redis cache database</returns>
+        public virtual async Task<IDatabase> GetDatabaseAsync(int? db = null, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return (await GetConnectionAsync(cancellationToken)).GetDatabase(db ?? -1);
         }
 
         /// <summary>
@@ -113,25 +142,46 @@ namespace Nop.Core.Caching
         /// </summary>
         /// <param name="endPoint">The network endpoint</param>
         /// <returns>Redis server</returns>
-        public IServer GetServer(EndPoint endPoint)
+        public virtual IServer GetServer(EndPoint endPoint)
         {
             return GetConnection().GetServer(endPoint);
+        }
+
+        /// <summary>
+        /// Obtain a configuration API for an individual server
+        /// </summary>
+        /// <param name="endPoint">The network endpoint</param>
+        /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete</param>
+        /// <returns>The asynchronous task whose result contains Redis server</returns>
+        public virtual async Task<IServer> GetServerAsync(EndPoint endPoint, CancellationToken cancellationToken)
+        {
+            return (await GetConnectionAsync(cancellationToken)).GetServer(endPoint);
         }
 
         /// <summary>
         /// Gets all endpoints defined on the server
         /// </summary>
         /// <returns>Array of endpoints</returns>
-        public EndPoint[] GetEndPoints()
+        public virtual EndPoint[] GetEndPoints()
         {
             return GetConnection().GetEndPoints();
+        }
+
+        /// <summary>
+        /// Gets all endpoints defined on the server
+        /// </summary>
+        /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete</param>
+        /// <returns>The asynchronous task whose result contains array of endpoints</returns>
+        public virtual async Task<EndPoint[]> GetEndPointsAsync(CancellationToken cancellationToken)
+        {
+            return (await GetConnectionAsync(cancellationToken)).GetEndPoints();
         }
 
         /// <summary>
         /// Delete all the keys of the database
         /// </summary>
         /// <param name="db">Database number; pass null to use the default value</param>
-        public void FlushDatabase(int? db = null)
+        public virtual void FlushDatabase(int? db = null)
         {
             var endPoints = GetEndPoints();
 
@@ -142,13 +192,26 @@ namespace Nop.Core.Caching
         }
 
         /// <summary>
+        /// Delete all the keys of the database
+        /// </summary>
+        /// <param name="db">Database number; pass null to use the default value</param>
+        /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete</param>
+        /// <returns>The asynchronous task whose result determines that all keys in the database are deleted</returns>
+        public virtual async Task FlushDatabaseAsync(int? db = null, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var endPoints = await GetEndPointsAsync(cancellationToken);
+            var servers = await Task.WhenAll(endPoints.Select(endPoint => GetServerAsync(endPoint, cancellationToken)));
+            Task.WaitAll(servers.Select(server => server.FlushDatabaseAsync(db ?? -1)).ToArray(), cancellationToken);
+        }
+
+        /// <summary>
         /// Perform some action with Redis distributed lock
         /// </summary>
         /// <param name="resource">The thing we are locking on</param>
         /// <param name="expirationTime">The time after which the lock will automatically be expired by Redis</param>
         /// <param name="action">Action to be performed with locking</param>
         /// <returns>True if lock was acquired and action was performed; otherwise false</returns>
-        public bool PerformActionWithLock(string resource, TimeSpan expirationTime, Action action)
+        public virtual bool PerformActionWithLock(string resource, TimeSpan expirationTime, Action action)
         {
             //use RedLock library
             using (var redisLock = _redisLockFactory.CreateLock(resource, expirationTime))
@@ -159,6 +222,31 @@ namespace Nop.Core.Caching
 
                 //perform action
                 action();
+
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Perform some action with Redis distributed lock
+        /// </summary>
+        /// <param name="resource">The thing we are locking on</param>
+        /// <param name="expirationTime">The time after which the lock will automatically be expired by Redis</param>
+        /// <param name="action">Action to be performed with locking</param>
+        /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete</param>
+        /// <returns>The asynchronous task whose result determines whether lock is acquired and action is performed</returns>
+        public virtual async Task<bool> PerformActionWithLockAsync(string resource, TimeSpan expirationTime, Func<CancellationToken, Task> action,
+            CancellationToken cancellationToken)
+        {
+            //use RedLock library
+            using (var redisLock = await _redisLockFactory.CreateLockAsync(resource, expirationTime))
+            {
+                //ensure that lock is acquired
+                if (!redisLock.IsAcquired)
+                    return false;
+
+                //perform action
+                await action(cancellationToken);
 
                 return true;
             }
