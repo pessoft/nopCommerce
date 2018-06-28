@@ -6,7 +6,7 @@ using Nop.Core.Configuration;
 namespace Nop.Core.Infrastructure.DependencyManagement
 {
     /// <summary>
-    /// Dependency registrar interface
+    /// Represents a dependency registrar
     /// </summary>
     public partial interface IDependencyRegistrar
     {

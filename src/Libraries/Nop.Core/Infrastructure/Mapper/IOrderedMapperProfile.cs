@@ -2,7 +2,7 @@
 namespace Nop.Core.Infrastructure.Mapper
 {
     /// <summary>
-    /// Mapper profile registrar interface
+    /// Represents an ordered mapper profile
     /// </summary>
     public partial interface IOrderedMapperProfile
     {
