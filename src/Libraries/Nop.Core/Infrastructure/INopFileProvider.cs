@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Security.AccessControl;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.FileProviders;
 
@@ -10,7 +11,7 @@ namespace Nop.Core.Infrastructure
     /// <summary>
     /// A file provider abstraction
     /// </summary>
-    public interface INopFileProvider : IFileProvider
+    public partial interface INopFileProvider : IFileProvider
     {
         /// <summary>
         /// Combines an array of strings into a path
@@ -18,7 +19,7 @@ namespace Nop.Core.Infrastructure
         /// <param name="paths">An array of parts of the path</param>
         /// <returns>The combined paths</returns>
         string Combine(params string[] paths);
-        
+
         /// <summary>
         /// Creates all directories and subdirectories in the specified path unless they already exist
         /// </summary>
@@ -42,7 +43,7 @@ namespace Nop.Core.Infrastructure
         /// </summary>
         /// <param name="filePath">The name of the file to be deleted. Wildcard characters are not supported</param>
         void DeleteFile(string filePath);
-        
+
         /// <summary>
         /// Determines whether the given path refers to an existing directory on disk
         /// </summary>
@@ -265,7 +266,7 @@ namespace Nop.Core.Infrastructure
         /// <param name="path">The path to map. E.g. "~/bin"</param>
         /// <returns>The physical path. E.g. "c:\inetpub\wwwroot\bin"</returns>
         string MapPath(string path);
-        
+
         /// <summary>
         /// Reads the contents of the file into a byte array
         /// </summary>
@@ -286,9 +287,10 @@ namespace Nop.Core.Infrastructure
         /// </summary>
         /// <param name="path">The file to open for reading</param>
         /// <param name="encoding">The encoding applied to the contents of the file</param>
-        /// <returns>A string containing all lines of the file</returns>
-        Task<string> ReadAllTextAsync(string path, Encoding encoding);
-        
+        /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete</param>
+        /// <returns>The asynchronous task whose result contains the read text from a file by the passed path</returns>
+        Task<string> ReadAllTextAsync(string path, Encoding encoding, CancellationToken cancellationToken = default(CancellationToken));
+
         /// <summary>
         /// Sets the date and time, in coordinated universal time (UTC), that the specified file was last written to
         /// </summary>
@@ -298,7 +300,7 @@ namespace Nop.Core.Infrastructure
         /// This value is expressed in UTC time
         /// </param>
         void SetLastWriteTimeUtc(string path, DateTime lastWriteTimeUtc);
-        
+
         /// <summary>
         /// Writes the specified byte array to the file
         /// </summary>
@@ -322,6 +324,9 @@ namespace Nop.Core.Infrastructure
         /// <param name="path">The file to write to</param>
         /// <param name="contents">The string to write to the file</param>
         /// <param name="encoding">The encoding to apply to the string</param>
-        Task WriteAllTextAsync(string path, string contents, Encoding encoding);
+        /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete</param>
+        /// <returns>The asynchronous task whose result determines that passed text is written to a file by the passed path</returns>
+        Task WriteAllTextAsync(string path, string contents, Encoding encoding,
+            CancellationToken cancellationToken = default(CancellationToken));
     }
 }

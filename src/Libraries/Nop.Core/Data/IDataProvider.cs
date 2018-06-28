@@ -1,4 +1,6 @@
 ﻿using System.Data.Common;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Nop.Core.Data
 {
@@ -8,11 +10,18 @@ namespace Nop.Core.Data
     public partial interface IDataProvider
     {
         #region Methods
-        
+
         /// <summary>
         /// Initialize database
         /// </summary>
         void InitializeDatabase();
+
+        /// <summary>
+        /// Initialize database
+        /// </summary>
+        /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete</param>
+        /// <returns>The asynchronous task whose result determines that database is initialized</returns>
+        Task InitializeDatabaseAsync(CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// Get a support database parameter object (used by stored procedures)

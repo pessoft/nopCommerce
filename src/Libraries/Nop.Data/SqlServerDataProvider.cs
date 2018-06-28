@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Nop.Core.Data;
 using Nop.Core.Domain.Common;
 using Nop.Core.Infrastructure;
@@ -45,6 +47,45 @@ namespace Nop.Data
 
             //create stored procedures 
             context.ExecuteSqlScriptFromFile(fileProvider.MapPath(NopDataDefaults.SqlServerStoredProceduresFilePath));
+        }
+
+        /// <summary>
+        /// Initialize database
+        /// </summary>
+        /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete</param>
+        /// <returns>The asynchronous task whose result determines that database is initialized</returns>
+        public virtual async Task InitializeDatabaseAsync(CancellationToken cancellationToken)
+        {
+            IDbContext context = null;
+            INopFileProvider fileProvider = null;
+
+            //TODO: 
+            await Task.Run(() =>
+            {
+                context = EngineContext.Current.Resolve<IDbContext>();
+
+                //check some of table names to ensure that we have nopCommerce 2.00+ installed
+                var tableNamesToValidate = new List<string> { "Customer", "Discount", "Order", "Product", "ShoppingCartItem" };
+                var existingTableNames = context
+                    .QueryFromSql<StringQueryType>("SELECT table_name AS Value FROM INFORMATION_SCHEMA.TABLES WHERE table_type = 'BASE TABLE'")
+                    .Select(stringValue => stringValue.Value).ToList();
+                var createTables = !existingTableNames.Intersect(tableNamesToValidate, StringComparer.InvariantCultureIgnoreCase).Any();
+                if (!createTables)
+                    return;
+
+                fileProvider = EngineContext.Current.Resolve<INopFileProvider>();
+            }, cancellationToken);
+
+            //create tables
+            //EngineContext.Current.Resolve<IRelationalDatabaseCreator>().CreateTables();
+            //(context as DbContext).Database.EnsureCreated();
+            await context.ExecuteSqlScriptAsync(context.GenerateCreateScript(), cancellationToken);
+
+            //create indexes
+            await context.ExecuteSqlScriptFromFileAsync(fileProvider.MapPath(NopDataDefaults.SqlServerIndexesFilePath), cancellationToken);
+
+            //create stored procedures 
+            await context.ExecuteSqlScriptFromFileAsync(fileProvider.MapPath(NopDataDefaults.SqlServerStoredProceduresFilePath), cancellationToken);
         }
 
         /// <summary>
