@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 namespace Nop.Core.Infrastructure
 {
     /// <summary>
-    /// Interface which should be implemented by tasks run on startup
+    /// Represents a task that runs on startup
     /// </summary>
     public partial interface IStartupTask
     {

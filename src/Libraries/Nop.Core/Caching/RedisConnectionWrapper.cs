@@ -30,7 +30,6 @@ namespace Nop.Core.Caching
         public RedisConnectionWrapper(NopConfig config)
         {
             this._connectionString = new Lazy<string>(() => config.RedisCachingConnectionString);
-            this._redisLockFactory = CreateRedisLockFactory();
         }
 
         #endregion
@@ -95,6 +94,9 @@ namespace Nop.Core.Caching
         /// <returns>RedLock factory</returns>
         protected virtual RedLockFactory CreateRedisLockFactory()
         {
+            if (_redisLockFactory != null)
+                return _redisLockFactory;
+
             //get RedLock endpoints
             var configurationOptions = ConfigurationOptions.Parse(_connectionString.Value);
             var redLockEndPoints = GetEndPoints().Select(endPoint => new RedLockEndPoint
@@ -109,7 +111,37 @@ namespace Nop.Core.Caching
             }).ToList();
 
             //create RedLock factory to use RedLock distributed lock algorithm
-            return RedLockFactory.Create(redLockEndPoints);
+            _redisLockFactory = RedLockFactory.Create(redLockEndPoints);
+            return _redisLockFactory;
+        }
+
+        /// <summary>
+        /// Create instance of RedLock factory
+        /// </summary>
+        /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete</param>
+        /// <returns>The asynchronous task whose result contains RedLock factory</returns>
+        protected virtual async Task<RedLockFactory> CreateRedisLockFactoryAsync(CancellationToken cancellationToken)
+        {
+            if (_redisLockFactory != null)
+                return _redisLockFactory;
+
+            //get RedLock endpoints
+            var endpoints = await GetEndPointsAsync(cancellationToken);
+            var configurationOptions = ConfigurationOptions.Parse(_connectionString.Value);
+            var redLockEndPoints = endpoints.Select(endPoint => new RedLockEndPoint
+            {
+                EndPoint = endPoint,
+                Password = configurationOptions.Password,
+                Ssl = configurationOptions.Ssl,
+                RedisDatabase = configurationOptions.DefaultDatabase,
+                ConfigCheckSeconds = configurationOptions.ConfigCheckSeconds,
+                ConnectionTimeout = configurationOptions.ConnectTimeout,
+                SyncTimeout = configurationOptions.SyncTimeout
+            }).ToList();
+
+            //create RedLock factory to use RedLock distributed lock algorithm
+            _redisLockFactory = RedLockFactory.Create(redLockEndPoints);
+            return _redisLockFactory;
         }
 
         #endregion
@@ -214,7 +246,7 @@ namespace Nop.Core.Caching
         public virtual bool PerformActionWithLock(string resource, TimeSpan expirationTime, Action action)
         {
             //use RedLock library
-            using (var redisLock = _redisLockFactory.CreateLock(resource, expirationTime))
+            using (var redisLock = CreateRedisLockFactory().CreateLock(resource, expirationTime))
             {
                 //ensure that lock is acquired
                 if (!redisLock.IsAcquired)
@@ -239,7 +271,8 @@ namespace Nop.Core.Caching
             CancellationToken cancellationToken)
         {
             //use RedLock library
-            using (var redisLock = await _redisLockFactory.CreateLockAsync(resource, expirationTime))
+            var redisLockFactory = await CreateRedisLockFactoryAsync(cancellationToken);
+            using (var redisLock = await redisLockFactory.CreateLockAsync(resource, expirationTime))
             {
                 //ensure that lock is acquired
                 if (!redisLock.IsAcquired)

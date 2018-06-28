@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 namespace Nop.Core.Caching
 {
     /// <summary>
-    /// Extensions of ICacheManager
+    /// Represents extensions of the cache manager
     /// </summary>
-    public static class CacheExtensions
+    public static partial class CacheExtensions
     {
         /// <summary>
         /// Get a cached item. If it's not in the cache yet, then load and cache it

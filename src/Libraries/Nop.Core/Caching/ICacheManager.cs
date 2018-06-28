@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 namespace Nop.Core.Caching
 {
     /// <summary>
-    /// Cache manager interface
+    /// Represents a cache manager
     /// </summary>
     public partial interface ICacheManager : IDisposable
     {

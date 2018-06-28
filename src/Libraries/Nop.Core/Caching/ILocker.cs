@@ -4,6 +4,9 @@ using System.Threading.Tasks;
 
 namespace Nop.Core.Caching
 {
+    /// <summary>
+    /// Represents a locker
+    /// </summary>
     public partial interface ILocker
     {
         /// <summary>
