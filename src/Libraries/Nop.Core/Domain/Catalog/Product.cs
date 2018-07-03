@@ -26,6 +26,11 @@ namespace Nop.Core.Domain.Catalog
         private ICollection<ProductWarehouseInventory> _productWarehouseInventory;
 
         /// <summary>
+        /// Gets or sets the author of the book
+        /// </summary>
+        public string Author { get; set; }
+
+        /// <summary>
         /// Gets or sets the product type identifier
         /// </summary>
         public int ProductTypeId { get; set; }
