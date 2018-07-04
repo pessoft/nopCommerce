@@ -208,6 +208,10 @@ namespace Nop.Web.Areas.Admin.Controllers
                     localized.Name,
                     localized.LanguageId);
                 _localizedEntityService.SaveLocalizedValue(product,
+                    x => x.Author,
+                    localized.Author,
+                    localized.LanguageId);
+                _localizedEntityService.SaveLocalizedValue(product,
                     x => x.ShortDescription,
                     localized.ShortDescription,
                     localized.LanguageId);
@@ -1461,6 +1465,7 @@ namespace Nop.Web.Areas.Admin.Controllers
             AddLocales(_languageService, model.Locales, (locale, languageId) =>
             {
                 locale.Name = product.GetLocalized(x => x.Name, languageId, false, false);
+                locale.Author = product.GetLocalized(x => x.Author, languageId, false, false);
                 locale.ShortDescription = product.GetLocalized(x => x.ShortDescription, languageId, false, false);
                 locale.FullDescription = product.GetLocalized(x => x.FullDescription, languageId, false, false);
                 locale.MetaKeywords = product.GetLocalized(x => x.MetaKeywords, languageId, false, false);

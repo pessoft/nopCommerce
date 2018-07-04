@@ -16824,4 +16824,16 @@
   <LocaleResource Name="Wishlist.YourWishlistURL">
     <Value>Your wishlist URL for sharing</Value>
   </LocaleResource>
+  <LocaleResource Name="Admin.Catalog.Products.Fields.Author">
+    <Value>Author</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.Catalog.Products.Fields.Author.Hint">
+    <Value>Book author.</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.Catalog.Products.Fields.Author.Required">
+    <Value>The author's name must be non-empty and not exceed 500 characters.</Value>
+  </LocaleResource>
+  <LocaleResource Name="Products.Author">
+    <Value>Author</Value>
+  </LocaleResource>
 </Language>

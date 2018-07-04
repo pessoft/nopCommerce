@@ -1853,9 +1853,10 @@ label, label + * {
 	margin: 0 0 20px;
 }
 .overview .availability,
+.overview .author,
 .variant-overview .availability {
-	margin: 0 0 20px;
-	overflow: hidden;
+    margin: 0 0 20px;
+    overflow: hidden;
 }
 .overview .availability .stock,
 .variant-overview .availability .stock {

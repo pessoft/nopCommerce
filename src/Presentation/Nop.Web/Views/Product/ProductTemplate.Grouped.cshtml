@@ -107,65 +107,67 @@
                                              title="@variant.DefaultPictureModel.Title" id="main-product-img-@variant.Id" />
                                     </div>
                                 }
-                                <div class="variant-overview">
-                                    @if (!string.IsNullOrWhiteSpace(variant.Name))
-                                    {
-                                        <div class="variant-name">
-                                            @variant.Name
-                                        </div>
-                                    }
-                                    @if (!string.IsNullOrWhiteSpace(variant.ShortDescription))
-                                    {
-                                        <div class="variant-description">
-                                            @Html.Raw(variant.ShortDescription)
-                                        </div>
-                                    }
-                                    <!--availability-->
-                                    @await Html.PartialAsync("_Availability", variant)
-                                    <!--SKU, MAN, GTIN, vendor-->
-                                    @await Html.PartialAsync("_SKU_Man_GTIN_Ven", variant)
-                                    <!--delivery-->
-                                    @await Html.PartialAsync("_DeliveryInfo", variant)
-                                    <!--sample download-->
-                                    @await Html.PartialAsync("_DownloadSample", variant)
-                                    <!--attributes-->
-                                    @{
-                                        var dataDictAttributes = new ViewDataDictionary(ViewData);
-                                        dataDictAttributes.TemplateInfo.HtmlFieldPrefix = $"attributes_{variant.Id}";
-                                        @await Html.PartialAsync("_ProductAttributes", variant.ProductAttributes, dataDictAttributes)
-                                    }
-                                    <!--gift card-->
-                                    @{
-                                        var dataDictGiftCard = new ViewDataDictionary(ViewData);
-                                        dataDictGiftCard.TemplateInfo.HtmlFieldPrefix = $"giftcard_{variant.Id}";
-                                        @await Html.PartialAsync("_GiftCardInfo", variant.GiftCard, dataDictGiftCard)
-                                    }
-                                    <!--rental info-->
-                                    @{
-                                        var dataDictRental = new ViewDataDictionary(ViewData);
-                                        dataDictRental.TemplateInfo.HtmlFieldPrefix = $"rental_{variant.Id}";
-                                        @await Html.PartialAsync("_RentalInfo", variant, dataDictRental)
-                                    }
-                                    <!--price & add to cart-->
-                                    @{
-                                        var dataDictPrice = new ViewDataDictionary(ViewData);
-                                        dataDictPrice.TemplateInfo.HtmlFieldPrefix = $"price_{variant.Id}";
-                                        @await Html.PartialAsync("_ProductPrice", variant.ProductPrice, dataDictPrice)
-                                    }
-                                    <!--price breaks-->
-                                    @await Html.PartialAsync("_ProductTierPrices", variant.TierPrices)
-                                    @{
-                                        var dataDictAddToCart = new ViewDataDictionary(ViewData);
-                                        dataDictAddToCart.TemplateInfo.HtmlFieldPrefix = $"addtocart_{variant.Id}";
-                                        @await Html.PartialAsync("_AddToCart", variant.AddToCart, dataDictAddToCart)
-                                    }
-                                    <!--wishlist-->
-                                    @{
-                                        var dataDictAddToWishlist = new ViewDataDictionary(ViewData);
-                                        dataDictAddToWishlist.TemplateInfo.HtmlFieldPrefix = $"addtocart_{variant.Id}";
-                                        @await Html.PartialAsync("_AddToWishlist", variant.AddToCart, dataDictAddToWishlist)
-                                    }
-                                </div>
+                                    <div class="variant-overview">
+                                        @if (!string.IsNullOrWhiteSpace(variant.Name))
+    {
+                                    <div class="variant-name">
+                                        @variant.Name
+                                    </div>
+}
+                                        @if (!string.IsNullOrWhiteSpace(variant.ShortDescription))
+    {
+                                    <div class="variant-description">
+                                        @Html.Raw(variant.ShortDescription)
+                                    </div>
+}
+                                        <!--availability-->
+                                        @await Html.PartialAsync("_Availability", variant)
+                                        <!--author-->
+                                        @await Html.PartialAsync("_Author", variant)
+                                        <!--SKU, MAN, GTIN, vendor-->
+                                        @await Html.PartialAsync("_SKU_Man_GTIN_Ven", variant)
+                                        <!--delivery-->
+                                        @await Html.PartialAsync("_DeliveryInfo", variant)
+                                        <!--sample download-->
+                                        @await Html.PartialAsync("_DownloadSample", variant)
+                                        <!--attributes-->
+                                        @{
+        var dataDictAttributes = new ViewDataDictionary(ViewData);
+        dataDictAttributes.TemplateInfo.HtmlFieldPrefix = $"attributes_{variant.Id}";
+                                    @await Html.PartialAsync("_ProductAttributes", variant.ProductAttributes, dataDictAttributes)
+                                        }
+                                        <!--gift card-->
+                                        @{
+        var dataDictGiftCard = new ViewDataDictionary(ViewData);
+        dataDictGiftCard.TemplateInfo.HtmlFieldPrefix = $"giftcard_{variant.Id}";
+                                    @await Html.PartialAsync("_GiftCardInfo", variant.GiftCard, dataDictGiftCard)
+                                        }
+                                        <!--rental info-->
+                                        @{
+        var dataDictRental = new ViewDataDictionary(ViewData);
+        dataDictRental.TemplateInfo.HtmlFieldPrefix = $"rental_{variant.Id}";
+                                    @await Html.PartialAsync("_RentalInfo", variant, dataDictRental)
+                                        }
+                                        <!--price & add to cart-->
+                                        @{
+        var dataDictPrice = new ViewDataDictionary(ViewData);
+        dataDictPrice.TemplateInfo.HtmlFieldPrefix = $"price_{variant.Id}";
+                                    @await Html.PartialAsync("_ProductPrice", variant.ProductPrice, dataDictPrice)
+                                        }
+                                        <!--price breaks-->
+                                        @await Html.PartialAsync("_ProductTierPrices", variant.TierPrices)
+                                        @{
+        var dataDictAddToCart = new ViewDataDictionary(ViewData);
+        dataDictAddToCart.TemplateInfo.HtmlFieldPrefix = $"addtocart_{variant.Id}";
+                                    @await Html.PartialAsync("_AddToCart", variant.AddToCart, dataDictAddToCart)
+                                        }
+                                        <!--wishlist-->
+                                        @{
+        var dataDictAddToWishlist = new ViewDataDictionary(ViewData);
+        dataDictAddToWishlist.TemplateInfo.HtmlFieldPrefix = $"addtocart_{variant.Id}";
+                                    @await Html.PartialAsync("_AddToWishlist", variant.AddToCart, dataDictAddToWishlist)
+                                        }
+                                    </div>
                             </div>
                                         }
                         @if (Model.AssociatedProducts.Count == 0)
