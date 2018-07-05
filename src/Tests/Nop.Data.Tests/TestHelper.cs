@@ -189,6 +189,7 @@ namespace Nop.Data.Tests
         {
             return new Product
             {
+                Author = "Test Author",
                 ProductType = ProductType.GroupedProduct,
                 ParentGroupedProductId = 2,
                 VisibleIndividually = true,
